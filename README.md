@@ -1,23 +1,32 @@
 # LegalRAG
 
-LegalRAG is a domain-specific legal assistant based on Retrieval-Augmented Generation (RAG).
-It is designed to extract and aggregate information from judicial decisions, laws, contracts, and legal commentaries across different languages.
+LegalRAG is a domain-specific legal assistant built on Retrieval-Augmented Generation (RAG).
+It retrieves and aggregates information from legal documents (judicial decisions, laws, contracts,
+commentaries) and answers questions with references back to the source text.
+
+> **Status:** Working prototype — document ingestion, multilingual retrieval and answer
+> generation are implemented. Items under *Roadmap* are planned, not yet built.
 
 ## Features
-- **Entity Extraction**: Normalization of legal terms and entity extraction using Legal-BERT.
-- **Multilingual Support**: Supports queries and answers in multiple languages.
-- **Source Verification**: Responses strictly reference source documents.
-- **Evaluation**: Uses Open RAG Eval for quality assessment.
+- **Multilingual retrieval** — multilingual E5 embeddings, so queries and documents may be in different languages.
+- **Source-grounded answers** — responses are generated from retrieved passages.
+- **Streamlit UI** — upload documents, build the index, and ask questions.
 
 ## Architecture
-- **Framework**: LlamaIndex
-- **Data Parsing**: unstructured.io, LlamaParse
-- **Entity Extraction**: Legal-BERT / LLM
-- **LLM**: Claude 3.5 Sonnet
-- **Embeddings**: E5-multilingual (HuggingFace)
-- **Vector DB**: Qdrant
-- **UI**: Streamlit
+- **Framework:** LlamaIndex
+- **LLM:** Anthropic Claude 3.5 Sonnet
+- **Embeddings:** `intfloat/multilingual-e5-large` (HuggingFace)
+- **Vector store:** Qdrant (in-memory in the demo)
+- **UI:** Streamlit
+
+## Roadmap (planned)
+- Legal entity extraction / term normalization (e.g. Legal-BERT)
+- Richer document parsing (unstructured.io / LlamaParse)
+- Automated quality evaluation (e.g. Open RAG Eval / Ragas)
 
 ## Setup
-1. Install dependencies: `pip install -r requirements.txt`
-2. Run the application: `streamlit run app.py`
+```bash
+pip install -r requirements.txt
+export ANTHROPIC_API_KEY="your_key"
+streamlit run app.py
+```

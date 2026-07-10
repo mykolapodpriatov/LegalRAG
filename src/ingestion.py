@@ -4,7 +4,7 @@ from llama_index.core import SimpleDirectoryReader
 from llama_index.core.node_parser import SentenceSplitter
 
 def load_documents(data_dir: str):
-    """Loads documents using unstructured.io / SimpleDirectoryReader."""
+    """Loads documents using LlamaIndex's SimpleDirectoryReader."""
     if not os.path.exists(data_dir):
         os.makedirs(data_dir, exist_ok=True)
         return []

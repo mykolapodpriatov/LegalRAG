@@ -20,3 +20,19 @@ jobs:
         run: ruff check .
       - name: Byte-compile sources
         run: python -m compileall -q .
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Install ONLY the lightweight deps the tested code paths need. We do NOT
+      # install -r requirements.txt: that pulls torch/transformers/streamlit
+      # (hundreds of MB) which are irrelevant to these tests and would slow or
+      # break CI. The code under test is written to import without them.
+      - name: Install minimal test deps
+        run: pip install pytest llama-index-core llama-index-vector-stores-qdrant qdrant-client
+      - name: Run tests
+        run: pytest -q

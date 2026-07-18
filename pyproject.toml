@@ -1,0 +1,30 @@
+[tool.ruff]
+# Match the environment CI lints against (setup-python 3.12, ruff 0.14.14).
+target-version = "py312"
+line-length = 100
+
+# Rule selection is intentionally left at ruff's defaults ("E4", "E7", "E9",
+# "F") so this config mirrors exactly what `ruff check .` enforced before the
+# pyproject existed -- adding no new failures to the existing sources.
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+addopts = "-ra"
+# Make the project root importable so tests can `import src.<module>` without
+# an installed package or an sdist build step.
+pythonpath = ["."]
+
+[tool.mypy]
+# Lenient: this is a small prototype whose deps (llama-index, qdrant) ship
+# incomplete stubs, so missing-import noise is silenced rather than typed away.
+python_version = "3.12"
+ignore_missing_imports = true
+warn_unused_ignores = false
+check_untyped_defs = false
+disallow_untyped_defs = false
+# `src` is imported as a namespace package (no __init__.py); anchor module
+# resolution to the repo root so `src/foo.py` is `src.foo`, not `foo`.
+namespace_packages = true
+explicit_package_bases = true
+mypy_path = "."

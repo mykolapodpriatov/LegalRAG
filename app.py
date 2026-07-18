@@ -3,6 +3,7 @@ import logging
 from src.ingestion import load_documents, chunk_documents
 from src.retrieval import build_index
 from src.generation import get_query_engine, generate_response
+from src.formatting import format_source_nodes
 
 st.set_page_config(page_title="LegalRAG", layout="wide")
 
@@ -45,8 +46,8 @@ if st.button("Submit"):
                 st.write(response.response)
                 
                 st.markdown("### Sources")
-                for source in response.source_nodes:
-                    st.info(f"**Score:** {source.score}\n\n**Text:** {source.node.text[:200]}...")
+                for citation in format_source_nodes(response.source_nodes):
+                    st.info(citation)
             except Exception as e:
                 logging.error(f"Exception during generation: {e}", exc_info=True)
                 st.error(f"Error generating response: {str(e)}")

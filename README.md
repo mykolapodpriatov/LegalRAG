@@ -30,3 +30,12 @@ pip install -r requirements.txt
 export ANTHROPIC_API_KEY="your_key"
 streamlit run app.py
 ```
+
+## Try it offline
+Smoke-test the retrieval pipeline with no Anthropic API key, no ~2 GB embedding
+model and no torch. The demo indexes a tiny hardcoded legal corpus with a
+lightweight `MockEmbedding` and prints the top passages for a sample query:
+```bash
+pip install llama-index-core llama-index-vector-stores-qdrant qdrant-client
+python -m scripts.demo_retrieval
+```

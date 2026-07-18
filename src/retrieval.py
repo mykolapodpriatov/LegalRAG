@@ -35,7 +35,7 @@ def get_embed_model():
     return HuggingFaceEmbedding(model_name="intfloat/multilingual-e5-large")
 
 
-def build_index(nodes, embed_model=None):
+def build_index(nodes, embed_model=None, persist_path=None, collection_name="legal_docs"):
     """Builds a Qdrant vector index over ``nodes``.
 
     Args:
@@ -45,17 +45,28 @@ def build_index(nodes, embed_model=None):
             lightweight model (e.g. ``MockEmbedding``) lets callers build an
             index without loading the heavyweight HuggingFace model, which is
             what tests rely on.
+        persist_path: Optional on-disk directory for Qdrant's local storage.
+            When ``None`` (default) Qdrant runs in-memory and the index lives
+            only for the process lifetime. When set, embeddings are written to
+            disk so the corpus need not be re-embedded on the next run.
+        collection_name: Name of the Qdrant collection to write into.
 
     Note:
-        Qdrant runs in-memory (``location=":memory:"``), so the index is held
-        only for the lifetime of the process and is rebuilt on restart.
+        Qdrant's local persistence takes an exclusive lock on ``persist_path``;
+        close the client (``index.vector_store.client.close()``) before opening
+        another client on the same directory.
     """
     if embed_model is None:
         embed_model = get_embed_model()
 
-    # Setup Qdrant (in-memory for prototyping)
-    client = qdrant_client.QdrantClient(location=":memory:")
-    vector_store = QdrantVectorStore(client=client, collection_name="legal_docs")
+    # In-memory when no path is given; otherwise persist to disk so the corpus
+    # survives restarts instead of being re-embedded every time.
+    if persist_path is None:
+        client = qdrant_client.QdrantClient(location=":memory:")
+    else:
+        client = qdrant_client.QdrantClient(path=persist_path)
+
+    vector_store = QdrantVectorStore(client=client, collection_name=collection_name)
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
 
     # Build Index

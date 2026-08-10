@@ -32,7 +32,10 @@ jobs:
       # install -r requirements.txt: that pulls torch/transformers/streamlit
       # (hundreds of MB) which are irrelevant to these tests and would slow or
       # break CI. The code under test is written to import without them.
+      # qdrant-client>=1.19 dropped `qdrant_fastembed.IDF_EMBEDDING_MODELS`,
+      # which llama-index-vector-stores-qdrant 0.10.2 still imports at module
+      # load time; pin below it until a compatible llama-index release ships.
       - name: Install minimal test deps
-        run: pip install pytest llama-index-core llama-index-vector-stores-qdrant qdrant-client
+        run: pip install pytest llama-index-core llama-index-vector-stores-qdrant "qdrant-client<1.19"
       - name: Run tests
         run: pytest -q

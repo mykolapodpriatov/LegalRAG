@@ -16,7 +16,7 @@ commentaries) and answers questions with references back to the source text.
 - **Framework:** LlamaIndex
 - **LLM:** Anthropic Claude 3.5 Sonnet
 - **Embeddings:** `intfloat/multilingual-e5-large` (HuggingFace)
-- **Vector store:** Qdrant (in-memory in the demo)
+- **Vector store:** Qdrant (persisted to disk by default; `QDRANT_PATH` overrides the location, in-memory in the offline demo script)
 - **UI:** Streamlit
 
 ## Roadmap (planned)

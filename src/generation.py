@@ -1,7 +1,7 @@
 import os
 
 
-def get_query_engine(index, llm=None):
+def get_query_engine(index, llm=None, similarity_top_k=5):
     """Creates a query engine using Claude 3.5 Sonnet.
 
     Args:
@@ -10,6 +10,8 @@ def get_query_engine(index, llm=None):
             when omitted. Injecting a lightweight model (e.g. ``MockLLM``)
             lets callers build an engine without an API key or a network
             call, which is what tests rely on.
+        similarity_top_k: Number of similar passages to retrieve. Defaults
+            to 5 when omitted.
     """
     if llm is None:
         api_key = os.environ.get("ANTHROPIC_API_KEY")
@@ -21,7 +23,7 @@ def get_query_engine(index, llm=None):
 
     return index.as_query_engine(
         llm=llm,
-        similarity_top_k=5,
+        similarity_top_k=similarity_top_k,
         response_mode="compact",
     )
 

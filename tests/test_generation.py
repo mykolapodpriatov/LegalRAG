@@ -48,6 +48,31 @@ def test_get_query_engine_accepts_injected_llm(monkeypatch) -> None:
     assert index.kwargs["response_mode"] == "compact"
 
 
+def test_get_query_engine_forwards_similarity_top_k(monkeypatch) -> None:
+    """An injected fake index / llm receives the caller-supplied top-k."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    index = _FakeIndex()
+    llm = MockLLM()
+
+    get_query_engine(index, llm=llm, similarity_top_k=10)
+
+    assert index.kwargs is not None
+    assert index.kwargs["similarity_top_k"] == 10
+    assert index.kwargs["llm"] is llm
+    assert index.kwargs["response_mode"] == "compact"
+
+
+def test_get_query_engine_default_similarity_top_k_is_five(monkeypatch) -> None:
+    """Omitting similarity_top_k keeps the historical default of 5."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    index = _FakeIndex()
+
+    get_query_engine(index, llm=MockLLM())
+
+    assert index.kwargs is not None
+    assert index.kwargs["similarity_top_k"] == 5
+
+
 def test_generate_response_delegates_to_query_engine() -> None:
     """``generate_response`` returns whatever ``query_engine.query`` returns."""
     seen: dict[str, str] = {}

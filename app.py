@@ -19,6 +19,17 @@ if "query_engine" not in st.session_state:
     st.session_state.query_engine = None
 if "qdrant_client" not in st.session_state:
     st.session_state.qdrant_client = None
+if "index" not in st.session_state:
+    st.session_state.index = None
+
+with st.sidebar:
+    similarity_top_k = st.slider(
+        "Passages to retrieve (top-k)",
+        min_value=1,
+        max_value=20,
+        value=5,
+        help="How many similar passages to retrieve for each query.",
+    )
 
 data_dir = st.text_input("Data Directory", value="./data")
 persist_path_input = st.text_input(
@@ -38,11 +49,16 @@ if st.button("Load & Index Documents"):
             if st.session_state.qdrant_client is not None:
                 st.session_state.qdrant_client.close()
                 st.session_state.qdrant_client = None
+                st.session_state.index = None
 
             if collection_is_populated(persist_path, COLLECTION_NAME):
                 index = load_index(persist_path=persist_path, collection_name=COLLECTION_NAME)
                 st.session_state.qdrant_client = index.vector_store.client
-                st.session_state.query_engine = get_query_engine(index)
+                st.session_state.index = index
+                st.session_state.query_engine = get_query_engine(
+                    index, similarity_top_k=similarity_top_k
+                )
+                st.session_state.engine_top_k = similarity_top_k
                 st.success("Loaded existing index from persistent storage.")
             else:
                 docs = load_documents(data_dir)
@@ -54,11 +70,25 @@ if st.button("Load & Index Documents"):
                         nodes, persist_path=persist_path, collection_name=COLLECTION_NAME
                     )
                     st.session_state.qdrant_client = index.vector_store.client
-                    st.session_state.query_engine = get_query_engine(index)
+                    st.session_state.index = index
+                    st.session_state.query_engine = get_query_engine(
+                        index, similarity_top_k=similarity_top_k
+                    )
+                    st.session_state.engine_top_k = similarity_top_k
                     st.success(f"Successfully indexed {len(nodes)} chunks from {len(docs)} documents.")
         except Exception as e:
             logging.error(f"Exception during indexing: {e}", exc_info=True)
             st.error(f"Error loading/indexing documents: {str(e)}")
+
+# Rebuild the query engine when top-k changes; the Qdrant index stays put.
+if (
+    st.session_state.index is not None
+    and st.session_state.get("engine_top_k") != similarity_top_k
+):
+    st.session_state.query_engine = get_query_engine(
+        st.session_state.index, similarity_top_k=similarity_top_k
+    )
+    st.session_state.engine_top_k = similarity_top_k
 
 query = st.text_input("Enter your legal query:")
 

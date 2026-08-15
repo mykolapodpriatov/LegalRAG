@@ -5,6 +5,7 @@ from src.ingestion import load_documents, chunk_documents
 from src.retrieval import build_index, collection_is_populated, load_index
 from src.generation import get_query_engine, generate_response
 from src.formatting import format_source_nodes
+from src.history import DEFAULT_HISTORY_CAP, push_history
 
 st.set_page_config(page_title="LegalRAG", layout="wide")
 
@@ -21,6 +22,10 @@ if "qdrant_client" not in st.session_state:
     st.session_state.qdrant_client = None
 if "index" not in st.session_state:
     st.session_state.index = None
+if "history" not in st.session_state:
+    st.session_state.history = []
+if "selected_history" not in st.session_state:
+    st.session_state.selected_history = None
 
 with st.sidebar:
     similarity_top_k = st.slider(
@@ -30,6 +35,23 @@ with st.sidebar:
         value=5,
         help="How many similar passages to retrieve for each query.",
     )
+
+    st.markdown("### History")
+    if st.button("Clear history"):
+        st.session_state.history = []
+        st.session_state.selected_history = None
+    if not st.session_state.history:
+        st.caption("No queries yet.")
+    else:
+        for idx, item in enumerate(reversed(st.session_state.history)):
+            label = item["query"]
+            if len(label) > 60:
+                label = label[:57] + "..."
+            # Newest first; key on original index so labels stay unique.
+            original_idx = len(st.session_state.history) - 1 - idx
+            if st.button(label, key=f"history_{original_idx}"):
+                st.session_state.query_input = item["query"]
+                st.session_state.selected_history = item
 
 data_dir = st.text_input("Data Directory", value="./data")
 persist_path_input = st.text_input(
@@ -90,7 +112,7 @@ if (
     )
     st.session_state.engine_top_k = similarity_top_k
 
-query = st.text_input("Enter your legal query:")
+query = st.text_input("Enter your legal query:", key="query_input")
 
 if st.button("Submit"):
     if st.session_state.query_engine is None:
@@ -101,12 +123,23 @@ if st.button("Submit"):
         with st.spinner("Generating answer..."):
             try:
                 response = generate_response(st.session_state.query_engine, query)
-                st.markdown("### Answer")
-                st.write(response.response)
-                
-                st.markdown("### Sources")
-                for citation in format_source_nodes(response.source_nodes):
-                    st.info(citation)
+                entry = {
+                    "query": query,
+                    "answer": response.response,
+                    "sources": response.source_nodes,
+                }
+                st.session_state.history = push_history(
+                    st.session_state.history, entry, cap=DEFAULT_HISTORY_CAP
+                )
+                st.session_state.selected_history = entry
             except Exception as e:
                 logging.error(f"Exception during generation: {e}", exc_info=True)
                 st.error(f"Error generating response: {str(e)}")
+
+if st.session_state.selected_history is not None:
+    entry = st.session_state.selected_history
+    st.markdown("### Answer")
+    st.write(entry["answer"])
+    st.markdown("### Sources")
+    for citation in format_source_nodes(entry["sources"]):
+        st.info(citation)

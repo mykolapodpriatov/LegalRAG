@@ -72,8 +72,11 @@ def recall_at_k(retrieved_ids: Sequence[str], relevant_ids: Iterable[str], k: in
         # No ground truth means nothing to recall. Returning 1.0 would let an
         # unlabelled row quietly inflate the mean.
         return 0.0
-    found = sum(1 for chunk_id in retrieved_ids[:k] if chunk_id in relevant)
-    return found / len(relevant)
+    # A retriever that repeats one hit must not be scored as if it found
+    # several. Recall is a fraction of the relevant set, so it stays in
+    # ``[0, 1]`` even when the ranking contains the same id twice.
+    found = {chunk_id for chunk_id in retrieved_ids[:k] if chunk_id in relevant}
+    return len(found) / len(relevant)
 
 
 def reciprocal_rank(retrieved_ids: Sequence[str], relevant_ids: Iterable[str]) -> float:

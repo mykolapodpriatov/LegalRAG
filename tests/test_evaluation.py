@@ -49,6 +49,13 @@ def test_recall_rejects_a_cutoff_below_one() -> None:
         recall_at_k(["a"], ["a"], 0)
 
 
+def test_a_repeated_hit_counts_once() -> None:
+    # One relevant passage listed twice is still one find. Counting both
+    # would report recall 2.0 and let a duplicated ranking pass a gate.
+    assert recall_at_k(["a", "a", "a"], ["a"], 3) == 1.0
+    assert recall_at_k(["a", "a", "b"], ["a", "b"], 3) == 1.0
+
+
 # ---------------------------------------------------------------------------
 # reciprocal rank
 # ---------------------------------------------------------------------------
